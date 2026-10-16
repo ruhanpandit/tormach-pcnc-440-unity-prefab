@@ -8,7 +8,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 /// One click: doors open → spindle down → table shifts → spindle up → doors open → reset
 /// Uses direct position setting per frame instead of lerp for reliability.
 /// </summary>
-public class PCNC440Controllerv3 : MonoBehaviour
+public class PCNC440Controller : MonoBehaviour
 {
     [Header("=== Pivot References ===")]
     public Transform leftDoorPivot;
