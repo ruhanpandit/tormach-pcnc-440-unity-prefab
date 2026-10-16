@@ -2,7 +2,15 @@
 
 ## Overview
 
-This tutorial walks through the process of creating an interactive VR digital twin of the Tormach PCNC 440 CNC milling machine using Unity 6.3 LTS with the Universal Render Pipeline (URP), XR Interaction Toolkit 3.3.1, and the XR Device Simulator for desktop-based VR testing. The final result is a fully textured 3D model of the PCNC 440 that users can interact with in VR — pointing at the machine and pressing grip triggers a realistic demo sequence where the doors swing open and close, the spindle plunges down, the table shifts to simulate cutting, and everything resets.
+This tutorial walks through the process of creating an interactive VR digital twin of the Tormach PCNC 440 CNC milling machine using Unity 6.3 LTS with the Universal Render Pipeline (URP), XR Interaction Toolkit 3.3.1, and the XR Device Simulator for desktop-based VR testing. The final result is a fully textured 3D model of the PCNC 440 that users can interact with in VR -- pointing at the machine and pressing grip triggers a realistic demo sequence where the doors swing open and close, the spindle plunges down, the table shifts to simulate cutting, and everything resets.
+
+## What's in this repo
+
+- `tormachpcnc440.unitypackage` -- The Unity asset package containing the PCNC 440 prefab, materials, and scripts.
+- `Scripts/` -- Extracted C# source scripts from the package:
+  - `Scripts/Editor/PCNC440MaterialTagger.cs` -- Unity editor window that walks through 180+ mesh bodies on the PCNC 440 model and assigns URP/Built-in materials by category (gray panel, glass door, dark interior, decal, dark trim, machine parts).
+  - `Scripts/PCNC440Controller.cs` -- Main controller script (class name `PCNC440Controllerv3`). XR grip triggers a state-machine demo sequence: doors open, spindle plunges, table moves to simulate cutting, then everything resets. Final version.
+  - `Scripts/PCNC440DoorController.cs` -- Simpler door-only controller. XR grip toggles the enclosure doors open and closed.
 
 ## Prerequisites
 
@@ -21,26 +29,26 @@ This tutorial walks through the process of creating an interactive VR digital tw
 
 ## Part 2: Applying Materials with the Material Tagger
 
-The imported model arrives with default materials and no texturing. The PCNC 440 has several distinct surface types — gray metal panels, transparent glass doors, darker interior surfaces, and mechanical parts. Rather than manually assigning materials to 180+ individual mesh bodies, we built a custom Unity Editor tool to streamline the process.
+The imported model arrives with default materials and no texturing. The PCNC 440 has several distinct surface types -- gray metal panels, transparent glass doors, darker interior surfaces, and mechanical parts. Rather than manually assigning materials to 180+ individual mesh bodies, we built a custom Unity Editor tool to streamline the process.
 
 ### Setting Up the Material Tagger
 
 1. Create an `Editor` folder inside `Assets` (this is required for Editor scripts).
-2. Place the `PCNC440MaterialTagger.cs` script inside `Assets/Editor`.
+2. Copy `Scripts/Editor/PCNC440MaterialTagger.cs` from this repo into `Assets/Editor` in your Unity project.
 3. In Unity, go to **Tools → PCNC 440 Material Tagger** to open the tool window.
 
 ### Using the Material Tagger
 
 1. Drag your PCNC 440 root object from the Hierarchy into the **Root Object** field.
-2. Click **Scan for Bodies** — the tool will find all mesh children (in this project, 182 bodies were found).
+2. Click **Scan for Bodies** -- the tool will find all mesh children (in this project, 182 bodies were found).
 3. The tool selects and zooms to each body in the Scene view one at a time. For each body, click one of the category buttons:
-   - **Gray Panel** — Light gray matte metal (body panels, cabinet, screws, legs)
-   - **Glass Door** — Transparent polycarbonate enclosure doors
-   - **Dark Interior** — Darker surfaces visible inside the glass enclosure
-   - **Decal / Logo** — Side panels with "PCNC 440" and "tormach.com" branding
-   - **Dark Trim** — Handles, step stool, dark edges
-   - **Machine Parts** — Spindle, vise, internal mechanical components
-   - **Skip** — Parts that don't need a material
+   - **Gray Panel** -- Light gray matte metal (body panels, cabinet, screws, legs)
+   - **Glass Door** -- Transparent polycarbonate enclosure doors
+   - **Dark Interior** -- Darker surfaces visible inside the glass enclosure
+   - **Decal / Logo** -- Side panels with "PCNC 440" and "tormach.com" branding
+   - **Dark Trim** -- Handles, step stool, dark edges
+   - **Machine Parts** -- Spindle, vise, internal mechanical components
+   - **Skip** -- Parts that don't need a material
 4. After tagging the distinctive parts (glass, interior, machine parts), use the **"Tag ALL remaining as Gray Panel"** button to bulk-assign the majority of bodies.
 5. Click the green **"Apply All Materials"** button to generate and assign all materials.
 
@@ -63,14 +71,14 @@ Materials are saved to `Assets/PCNC440_Materials/` and can be tweaked in the Ins
 
 If a body is tagged incorrectly:
 
-1. Click the body in the Hierarchy — it highlights in the Scene view.
+1. Click the body in the Hierarchy -- it highlights in the Scene view.
 2. In the Inspector, expand **Materials** under the **Mesh Renderer** component.
 3. Click the circle next to the material name to open the material picker.
 4. Search for "PCNC440" and select the correct material.
 
 ## Part 3: Setting Up Animatable Parts with Pivot Objects
 
-The imported model has all bodies at Position (0, 0, 0) with geometry offsets baked into the mesh data. This means you cannot simply move a body's transform to animate it — you need to create parent "pivot" objects positioned at the correct hinge/center points.
+The imported model has all bodies at Position (0, 0, 0) with geometry offsets baked into the mesh data. This means you cannot simply move a body's transform to animate it -- you need to create parent "pivot" objects positioned at the correct hinge/center points.
 
 ### Unpacking the Prefab
 
@@ -87,7 +95,7 @@ For each moving part, create an empty GameObject as a child of the PCNC 440 root
 
 **Left Door Pivot:**
 1. Right-click the PCNC 440 → **Create Empty** → name it `LeftDoorPivot`.
-2. Position it at the left door's hinge edge — centered vertically between the top and bottom hinges, at the left edge of the door panel.
+2. Position it at the left door's hinge edge -- centered vertically between the top and bottom hinges, at the left edge of the door panel.
 3. Drag `Body1:159` onto `LeftDoorPivot` as a child.
 
 **Right Door Pivot:**
@@ -117,10 +125,10 @@ Any body that needs to move at runtime must have the **Static** checkbox uncheck
 
 Verify each pivot works by manually changing its transform values:
 
-- **LeftDoorPivot**: Change Rotation to (-20, 110, 15) — the door should swing open on its hinge. The door swing requires rotation on all three axes due to the machine's orientation in the scene.
-- **RightDoorPivot**: Change Rotation to (-20, -110, -15) — mirror of left door.
-- **SpindlePivot**: Change Position Y to a negative value — the spindle should move down.
-- **TablePivot**: Change Position X — the table should shift sideways. Change Position Z — the table should shift forward/backward.
+- **LeftDoorPivot**: Change Rotation to (-20, 110, 15) -- the door should swing open on its hinge. The door swing requires rotation on all three axes due to the machine's orientation in the scene.
+- **RightDoorPivot**: Change Rotation to (-20, -110, -15) -- mirror of left door.
+- **SpindlePivot**: Change Position Y to a negative value -- the spindle should move down.
+- **TablePivot**: Change Position X -- the table should shift sideways. Change Position Z -- the table should shift forward/backward.
 
 Reset all values after testing.
 
@@ -130,9 +138,9 @@ Reset all values after testing.
 
 The PCNC 440 root object needs three components for XR interaction:
 
-1. **Box Collider** — Defines the clickable area. Add via Add Component, then adjust Center and Size so the green wireframe covers the entire machine in Scene view.
-2. **Rigidbody** — Required by XR interactables. Set `Use Gravity` to off and `Is Kinematic` to on.
-3. **XR Simple Interactable** — Responds to controller select events (grip button). The Interaction Layer Mask should be set to `Default`.
+1. **Box Collider** -- Defines the clickable area. Add via Add Component, then adjust Center and Size so the green wireframe covers the entire machine in Scene view.
+2. **Rigidbody** -- Required by XR interactables. Set `Use Gravity` to off and `Is Kinematic` to on.
+3. **XR Simple Interactable** -- Responds to controller select events (grip button). The Interaction Layer Mask should be set to `Default`.
 
 Make sure the PCNC 440's Layer (top of Inspector) is set to **Default**, not "Ignore Raycast".
 
@@ -141,7 +149,7 @@ Make sure the PCNC 440's Layer (top of Inspector) is set to **Default**, not "Ig
 ### Script Setup
 
 1. Create a `Scripts` folder inside `Assets`.
-2. Place `PCNC440Controller.cs` in `Assets/Scripts`.
+2. Copy `Scripts/PCNC440Controller.cs` from this repo into `Assets/Scripts` in your Unity project (the file is named `PCNC440Controller.cs` but the class inside is `PCNC440Controllerv3`).
 3. Drag the script onto the PCNC 440 root object.
 4. In the Inspector, assign all four pivot references: `LeftDoorPivot`, `RightDoorPivot`, `SpindlePivot`, `TablePivot`.
 
